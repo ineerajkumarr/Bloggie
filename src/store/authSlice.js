@@ -16,7 +16,7 @@ const authSlice = createSlice({
     },
     listDocs: (state, action) => {
       state.docs = action.payload;
-      console.log("Docs are :", state.docs);
+      // console.log("Docs are :", state.docs);
     },
   },
 });

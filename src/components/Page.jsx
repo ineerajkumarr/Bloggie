@@ -8,9 +8,8 @@ function Page() {
   const [author, setAuthor] = useState(null);
   const item = location.state || {};
   const navigate = useNavigate();
-  const prev = useSelector((state) => state.auth.userId);
   useEffect(() => {
-    console.log("-------------*---------", prev);
+    // console.log("-------------*---------", prev);
     async function fetchAuthor() {
       try {
         const result = await databases.getDocument(
@@ -20,7 +19,7 @@ function Page() {
         );
         setAuthor(result.name);
       } catch (error) {
-        console.error("Error fetching author:", error);
+        // console.error("Error fetching author:", error);
       }
     }
     fetchAuthor();

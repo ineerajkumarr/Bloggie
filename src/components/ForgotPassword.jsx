@@ -31,7 +31,7 @@ const ForgotPassword = () => {
     if (user) {
       setId(user.$id);
       setPasswd(user.password);
-      console.log(user);
+      // console.log(user);
     }
 
     return user !== null;
@@ -59,15 +59,15 @@ const ForgotPassword = () => {
 
       emailjs.send(serviceID, templateID, templateParams, userID).then(
         (response) => {
-          console.log(
-            "Email sent successfully!",
-            response.status,
-            response.text
-          );
+          // console.log(
+          //   "Email sent successfully!",
+          //   response.status,
+          //   response.text
+          // );
           alert("OTP sent to your email!");
         },
         (err) => {
-          console.error("Failed to send email.", err);
+          // console.error("Failed to send email.", err);
           alert("Failed to send email. Please try again.");
         }
       );
@@ -118,12 +118,12 @@ const ForgotPassword = () => {
         docId, // documentId
         { password: newPassword }
       );
-      console.log(result);
+      // console.log(result);
 
       alert("Password updated successfully!");
       setStep("reset");
       // Simulate password update (integrate Appwrite's password update API here)
-      console.log("Password updated successfully:", newPassword);
+      // console.log("Password updated successfully:", newPassword);
       alert("Password updated successfully!");
       setEmail("");
       setEnteredOtp("");
@@ -132,7 +132,7 @@ const ForgotPassword = () => {
       setStep("email");
       navigate("/login");
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       setStep("reset");
       setNewPassword("");
       alert("Some Error Occured. Try Again");

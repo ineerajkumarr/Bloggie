@@ -8,7 +8,7 @@ const loadSlice = createSlice({
   reducers: {
     loading: (state) => {
       state.loading = true;
-      console.log("reached slice");
+      // console.log("reached slice");
     },
     loaded: (state) => {
       state.loading = false;

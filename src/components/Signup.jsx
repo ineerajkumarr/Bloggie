@@ -24,7 +24,7 @@ function Signup() {
         import.meta.env.VITE_USERS_COLLECTIONS, // Replace with your Users Collection ID
         [Query.equal("email", email)] // Find user by email
       );
-      console.log("RESPONSE", response);
+      // console.log("RESPONSE", response);
 
       if (response.documents.length > 0) {
         setError("Already Registered Email Id. Try another.");
@@ -36,7 +36,7 @@ function Signup() {
 
       // Extract user ID from response
       const userId = ID.unique();
-      console.log("User ID:", userId);
+      // console.log("User ID:", userId);
 
       // Create a document with user information
       const documentResponse = await databases.createDocument(
@@ -50,9 +50,9 @@ function Signup() {
           password: passwd,
         }
       );
-      console.log("Document created:", documentResponse);
+      // console.log("Document created:", documentResponse);
     } catch (error) {
-      console.error("Error:", error);
+      // console.error("Error:", error);
     }
     setLoadingState(false);
     setEmail("");

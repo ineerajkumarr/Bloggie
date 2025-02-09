@@ -19,16 +19,16 @@ function Home() {
       import.meta.env.VITE_DATABASE_ID, // databaseId
       import.meta.env.VITE_COLLECTION_ID // collectionId
     );
-    console.log("databse id : ", import.meta.env.VITE_DATABASE_ID);
-    console.log("collections id :", import.meta.env.VITE_COLLCTION_ID);
+    // console.log("databse id : ", import.meta.env.VITE_DATABASE_ID);
+    // console.log("collections id :", import.meta.env.VITE_COLLCTION_ID);
 
     setDocs(result.documents);
     sessionStorage.setItem("docs", JSON.stringify(result.documents));
-    console.log(result);
+    // console.log(result);
   }
 
   useEffect(() => {
-    console.log("-------------*---------", prev);
+    // console.log("-------------*---------", prev);
 
     if (!docs) {
       getDocs();

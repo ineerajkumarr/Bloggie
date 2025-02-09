@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import { useParams, useLocation } from "react-router-dom";
 import client from "../appwrite";
@@ -13,6 +13,7 @@ import "./Profile.css";
 import ErrorBoundary from "./ErrorBoundary";
 import Modal from "./Modal";
 import Spinner from "./Spinner";
+import JoditEditor from "jodit-react";
 
 function Profile() {
   // const divRef = useRef(null);
@@ -26,6 +27,7 @@ function Profile() {
   const [isFocused, setIsFocused] = useState(false);
   const [editorLoaded, setEditorLoaded] = useState(true);
   const [body, setBody] = useState("");
+  const editor = useRef(null);
   const handleReadMore = (doc) => {
     navigate("/details", { state: doc });
   };
@@ -36,9 +38,9 @@ function Profile() {
 
   useEffect(() => {
     if (!user) {
-      console.log("USER : ", user);
+      // console.log("USER : ", user);
 
-      console.log("returned back !!");
+      // console.log("returned back !!");
 
       navigate("/login", { replace: true }); // Prevents back navigation
     }
@@ -53,6 +55,38 @@ function Profile() {
   //     }
   //   };
   // }, []);
+
+  const joditConfig = useMemo(
+    () => ({
+      placeholder: "Type Your Text Here",
+      autofocus: true,
+      saveMode: "preserve",
+      buttons: [
+        "bold",
+        "italic",
+        "underline",
+        "brush",
+        "strikethrough",
+        "link",
+        "table",
+        "undo",
+        "redo",
+        "align",
+        "font",
+        "fontsize",
+        "hr",
+        "superscript",
+        "subscript",
+        "ol",
+        "ul",
+        "indent",
+        "outdent",
+        "source",
+      ],
+    }),
+    []
+  );
+
   const logContent = async () => {
     if (!image) {
       try {
@@ -62,12 +96,12 @@ function Profile() {
           ID.unique(),
           { title: title, body: content, author: userId }
         );
-        console.log(response);
+        // console.log(response);
         setTitle("");
         setImage(null);
         setContent("Type Your Text Here");
       } catch (error) {
-        console.error(error);
+        // console.error(error);
       }
     } else {
       try {
@@ -76,7 +110,7 @@ function Profile() {
           ID.unique(), // Replace with your bucket ID
           image // Permissions, you can set it according to your requirements
         );
-        console.log("File uploaded successfully", response);
+        // console.log("File uploaded successfully", response);
 
         const fileId = response.$id;
         // console.log(fileId);
@@ -99,7 +133,7 @@ function Profile() {
                 return fileUrl.href;
               }
             } catch (error) {
-              console.error("Error fetching file URL, retrying...", error);
+              // console.error("Error fetching file URL, retrying...", error);
             }
             await new Promise((resolve) => setTimeout(resolve, delay));
           }
@@ -113,7 +147,7 @@ function Profile() {
               import.meta.env.VITE_STORAGE_ID,
               fileId
             );
-            console.log("File URL:", fileUrl);
+            // console.log("File URL:", fileUrl);
             // setImageUrl(fileUrl);
             let response = await databases.createDocument(
               import.meta.env.VITE_DATABASE_ID,
@@ -128,12 +162,12 @@ function Profile() {
               //   Permission.delete(Role.team("admin")), // Admins can delete this document
               // ]
             );
-            console.log(response);
+            // console.log(response);
             setTitle("");
             setImage(null);
             setContent("Type Your Text Here");
           } catch (error) {
-            console.error(error);
+            // console.error(error);
           }
         };
 
@@ -142,9 +176,9 @@ function Profile() {
 
         // console.log("previewURL", imageUrl);
 
-        console.log("imageURL", imageUrl);
+        // console.log("imageURL", imageUrl);
       } catch (error) {
-        console.error("Failed to upload file", error);
+        // console.error("Failed to upload file", error);
       }
     }
 
@@ -187,7 +221,7 @@ function Profile() {
         body: content,
       }
     );
-    console.log(result);
+    // console.log(result);
     setTitle("");
     setContent("Type Your Text Here");
     setFlag(false);
@@ -204,7 +238,7 @@ function Profile() {
   useEffect(() => {
     if (image) {
       // Perform actions with the updated image state
-      console.log("Image state has been updated:", image);
+      // console.log("Image state has been updated:", image);
     }
   }, [image]);
 
@@ -220,7 +254,7 @@ function Profile() {
   const handleImageChange = (e) => {
     e.preventDefault();
     setImage(e.target.files[0]);
-    console.log("Image received :", image);
+    // console.log("Image received :", image);
   };
 
   const handleDestroyEditor = () => {
@@ -250,7 +284,7 @@ function Profile() {
         ? prevSelected.filter((cardId) => cardId !== id)
         : [...prevSelected, id]
     );
-    console.log(selectedCards.length);
+    // console.log(selectedCards.length);
   };
 
   const handleDeleteSelected = async () => {
@@ -265,12 +299,12 @@ function Profile() {
             import.meta.env.VITE_COLLECTION_ID,
             cardId
           );
-          console.log(`Deleted card with ID: ${cardId}`);
+          // console.log(`Deleted card with ID: ${cardId}`);
         }
         setSelectedCards([]);
         setrenderer((prev) => !prev);
       } catch (error) {
-        console.error("Error deleting cards:", error);
+        // console.error("Error deleting cards:", error);
       }
     }
     setloadingState(false);
@@ -284,22 +318,22 @@ function Profile() {
         import.meta.env.VITE_COLLECTION_ID,
         [Query.equal("author", userId)]
       );
-      console.log(userId);
+      // console.log(userId);
       dispatch(listDocs(response.documents));
-      console.log("were in User documents:", response.documents);
+      // console.log("were in User documents:", response.documents);
       const result = await databases.getDocument(
         import.meta.env.VITE_DATABASE_ID, // databaseId
         import.meta.env.VITE_USERS_COLLECTIONS, // collectionId
         userId // queries (optional)
       );
-      console.log(result);
-      console.log("sessionId", user);
+      // console.log(result);
+      // console.log("sessionId", user);
       setdetails(result);
       setName(result.name);
 
       setloadingState(false);
     } catch (error) {
-      console.error("Error fetching documents:", error.message);
+      // console.error("Error fetching documents:", error.message);
     }
   };
   // fetchUserDocuments(userId);
@@ -319,13 +353,13 @@ function Profile() {
         import.meta.env.VITE_COLLECTION_ID, // collectionId
         modalId // documentId
       );
-      console.log(result);
+      // console.log(result);
       setrenderer((prev) => !prev);
     }
   };
 
   useEffect(() => {
-    console.log("bucket id", import.meta.env.VITE_STORAGE_ID);
+    // console.log("bucket id", import.meta.env.VITE_STORAGE_ID);
 
     fetchUserDocuments(userId);
   }, [renderer, userId]);
@@ -425,7 +459,7 @@ function Profile() {
                     <div className="card-buttons">
                       <button
                         onClick={() => {
-                          console.log(doc.body);
+                          // console.log(doc.body);
                           handleReadMore(doc);
                         }}
                         className="read-more-btn inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -437,7 +471,7 @@ function Profile() {
                           e.preventDefault();
                           setFlag(true);
                           await setUpdateDoc(doc);
-                          console.log("our updatedoc", updateDoc);
+                          // console.log("our updatedoc", updateDoc);
                           setTitle(doc.title);
                           setContent(doc.body);
                           handleScrollToTitle();
@@ -495,30 +529,15 @@ function Profile() {
               boxShadow: "none",
             }}
           >
-            {/* <ErrorBoundary> */}
-            {editorLoaded && (
-              <Editor
+            <div className="mb-4">
+              <JoditEditor
+                ref={editor}
                 value={content}
-                onEditorChange={(newContent) => setContent(newContent)}
-                // initialValue={flag ? updateDoc.body : content}
-                // onInit={(evt, editor) => (editorRef.current = editor)}
-                apiKey={import.meta.env.VITE_TINY_MCE_API}
-                init={{
-                  content_css: "./Profile.css",
-                  plugins:
-                    "anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks  ",
-                  toolbar:
-                    "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat",
-                  tinycomments_mode: "embedded",
-                  tinycomments_author: "Author name",
-                  mergetags_list: [
-                    { value: "First.Name", title: "First Name" },
-                    { value: "Email", title: "Email" },
-                  ],
-                }}
+                // onChange={setContent}
+                onBlur={(newContent) => setContent(newContent)}
+                config={joditConfig} // Uses memoized config
               />
-            )}
-            {/* </ErrorBoundary> */}
+            </div>
           </div>
           {flag ? (
             <div className="w-full flex items-center gap-6 justify-center">

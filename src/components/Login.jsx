@@ -21,10 +21,10 @@ function Login() {
   // Redirect if a user is already logged in
   useEffect(() => {
     if (prev) {
-      console.log("Can't access login page while logged in.");
+      // console.log("Can't access login page while logged in.");
       navigate(`/profile/${prev}`);
     } else {
-      console.log("No active session found.");
+      // console.log("No active session found.");
     }
   }, [prev, navigate]);
 
@@ -40,7 +40,7 @@ function Login() {
         import.meta.env.VITE_USERS_COLLECTIONS, // Replace with your Users Collection ID
         [Query.equal("email", userId)] // Find user by email
       );
-      console.log("RESPONSE", response);
+      // console.log("RESPONSE", response);
 
       if (response.documents.length === 0) {
         setError("User not found. Please check your email.");
@@ -61,7 +61,7 @@ function Login() {
       dispatch(login(user));
       navigate(`/profile/${user.userId}`);
     } catch (error) {
-      console.error("Login failed:", error);
+      // console.error("Login failed:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ function Login() {
   };
 
   const forgetPasswd = () => {
-    console.log("Redirecting to forgot password page...");
+    // console.log("Redirecting to forgot password page...");
     navigate("/forgotpassword");
   };
 
