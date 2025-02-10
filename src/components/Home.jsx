@@ -30,9 +30,9 @@ function Home() {
   useEffect(() => {
     // console.log("-------------*---------", prev);
 
-    if (!docs) {
-      getDocs();
-    }
+    // if (!docs) {
+    getDocs();
+    // }
   }, [prev]);
 
   const handleReadMore = (doc) => {

@@ -5,7 +5,10 @@ import { Account, Query } from "appwrite";
 import { useNavigate } from "react-router-dom";
 import { login } from "../store/authSlice";
 import { useDispatch, useSelector } from "react-redux";
+import Spinner from "./Spinner";
 import { FaSpinner } from "react-icons/fa"; // Import spinner icon
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHome } from "@fortawesome/free-solid-svg-icons";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -74,11 +77,7 @@ function Login() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Checking session...
-      </div>
-    );
+    return <Spinner />;
   }
 
   return (
@@ -160,14 +159,21 @@ function Login() {
             )}
           </button>
 
-          <p className="text-sm font-light text-gray-500 mt-4">
-            Don’t have an account yet?{" "}
-            <span
-              onClick={() => navigate("/signup")}
-              className="font-medium text-indigo-600 hover:underline cursor-pointer"
-            >
-              Sign up
+          <p className="text-sm font-light text-gray-500 mt-4 flex justify-between items-center">
+            <span>
+              Don’t have an account yet?{" "}
+              <span
+                onClick={() => navigate("/signup")}
+                className="font-medium text-indigo-600 hover:underline cursor-pointer"
+              >
+                Sign up
+              </span>
             </span>
+            <FontAwesomeIcon
+              onClick={() => navigate(`/`)}
+              className="text-xl hover:text-blue-500 cursor-pointer transition-all"
+              icon={faHome}
+            />
           </p>
         </form>
       </div>

@@ -4,6 +4,8 @@ import { databases } from "../appwrite";
 import { Account, ID, Query } from "appwrite";
 import { useNavigate } from "react-router-dom";
 import Spinner from "./Spinner";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHome } from "@fortawesome/free-solid-svg-icons";
 
 function Signup() {
   const account = new Account(client);
@@ -168,17 +170,26 @@ function Signup() {
           </p>
         </form>
 
-        <div className="text-center text-sm text-gray-600 mt-6">
-          Already have an account?{" "}
-          <span
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/login");
-            }}
-            className="text-indigo-600 hover:underline cursor-pointer"
-          >
-            Log in
-          </span>
+        <div className="text-center text-sm justify-between flex text-gray-600 mt-6">
+          <div>
+            Already have an account?{" "}
+            <span
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/login");
+              }}
+              className="text-indigo-600 hover:underline cursor-pointer"
+            >
+              Log in
+            </span>
+          </div>
+          <div>
+            <FontAwesomeIcon
+              onClick={() => navigate(`/`)}
+              className="text-xl hover:text-blue-500 cursor-pointer transition-all"
+              icon={faHome}
+            />
+          </div>
         </div>
       </div>
     </div>
