@@ -21,7 +21,8 @@ function Profile() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.userId);
+  const user = useSelector((state) => state.auth.user);
+  // console.log("userId", user);
   const docs = useSelector((state) => state.auth.docs);
   const titleRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -29,22 +30,37 @@ function Profile() {
   const [body, setBody] = useState("");
   const editor = useRef(null);
   const handleReadMore = (doc) => {
-    navigate("/details", { state: doc });
+    console.log("id of blog", doc);
+    navigate(`/details/${doc}`);
   };
   const handleScrollToTitle = () => {
     titleRef.current.scrollIntoView({ behavior: "smooth" }); // Scrolls the input into view
     titleRef.current.focus(); // Sets the cursor focus on the input
   };
-
+  //************************** */
   useEffect(() => {
     if (!user) {
       // console.log("USER : ", user);
 
-      // console.log("returned back !!");
+      console.log("returned back !!");
 
       navigate("/login", { replace: true }); // Prevents back navigation
     }
   }, [user, navigate]);
+
+  async function getRefreshedBlogs() {
+    const docsResponse = await fetch(import.meta.env.VITE_BLOG_URL_WITH_TOKEN, {
+      method: "GET",
+      headers: {
+        Authorization: user.token,
+      },
+    });
+    const docsData = await docsResponse.json();
+    const docs = docsData.data;
+    console.log(docs);
+    dispatch(listDocs(docs));
+  }
+  //************************** */
   // useEffect(() => {
   //   setEditorLoaded(true);
 
@@ -84,156 +100,115 @@ function Profile() {
         "source",
       ],
     }),
-    []
+    [],
   );
 
-  const logContent = async () => {
-    if (!image) {
-      try {
-        let response = await databases.createDocument(
-          import.meta.env.VITE_DATABASE_ID,
-          import.meta.env.VITE_COLLECTION_ID,
-          ID.unique(),
-          { title: title, body: content, author: userId }
-        );
-        // console.log(response);
-        setTitle("");
-        setImage(null);
-        setContent("Type Your Text Here");
-      } catch (error) {
-        // console.error(error);
-      }
-    } else {
-      try {
-        const response = await storage.createFile(
-          import.meta.env.VITE_STORAGE_ID,
-          ID.unique(), // Replace with your bucket ID
-          image // Permissions, you can set it according to your requirements
-        );
-        // console.log("File uploaded successfully", response);
+  async function uploadImageToCloudinary(file) {
+    console.log("inside 3rd party api");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUD_PRESET);
 
-        const fileId = response.$id;
-        // console.log(fileId);
-        // setTimeout(async () => {
-        //   const previewUrl = await storage
-        //     .getFilePreview("import.meta.env.VITE_STORAGE_ID", fileId)
-        //     .toString();
-
-        // }, 3000);
-        const retryGetFileUrl = async (
-          bucketId,
-          fileId,
-          retries = 5,
-          delay = 1000
-        ) => {
-          for (let i = 0; i < retries; i++) {
-            try {
-              const fileUrl = await storage.getFileView(bucketId, fileId); // Await here
-              if (fileUrl.href) {
-                return fileUrl.href;
-              }
-            } catch (error) {
-              // console.error("Error fetching file URL, retrying...", error);
-            }
-            await new Promise((resolve) => setTimeout(resolve, delay));
-          }
-          throw new Error("Failed to fetch file URL after retries");
-        };
-
-        // Ensure this is inside an async function
-        const fetchFileUrl = async () => {
-          try {
-            const fileUrl = await retryGetFileUrl(
-              import.meta.env.VITE_STORAGE_ID,
-              fileId
-            );
-            // console.log("File URL:", fileUrl);
-            // setImageUrl(fileUrl);
-            let response = await databases.createDocument(
-              import.meta.env.VITE_DATABASE_ID,
-              import.meta.env.VITE_COLLECTION_ID,
-              ID.unique(),
-              { title: title, body: content, author: userId, imageURL: fileUrl }
-              // [
-              //   Permission.read(Role.any()), // Anyone can view this document
-              //   Permission.update(Role.team("writers")), // Writers can update this document
-              //   Permission.update(Role.user(userId)), // Admins can update this document
-              //   Permission.delete(Role.user(userId)), // User 5c1f88b42259e can delete this document
-              //   Permission.delete(Role.team("admin")), // Admins can delete this document
-              // ]
-            );
-            // console.log(response);
-            setTitle("");
-            setImage(null);
-            setContent("Type Your Text Here");
-          } catch (error) {
-            // console.error(error);
-          }
-        };
-
-        // Call the async function
-        await fetchFileUrl();
-
-        // console.log("previewURL", imageUrl);
-
-        // console.log("imageURL", imageUrl);
-      } catch (error) {
-        // console.error("Failed to upload file", error);
-      }
-    }
-
-    // if (editorRef.current) {
-    //   const content = editorRef.current.getContent();
-    // try {
-    //   let response = await databases.createDocument(
-    //     import.meta.env.VITE_DATABASE_ID,
-    //     import.meta.env.VITE_COLLECTION_ID,
-    //     ID.unique(),
-    //     { title: title, body: content, author: userId, imageURL: imageUrl }
-    //     // [
-    //     //   Permission.read(Role.any()), // Anyone can view this document
-    //     //   Permission.update(Role.team("writers")), // Writers can update this document
-    //     //   Permission.update(Role.user(userId)), // Admins can update this document
-    //     //   Permission.delete(Role.user(userId)), // User 5c1f88b42259e can delete this document
-    //     //   Permission.delete(Role.team("admin")), // Admins can delete this document
-    //     // ]
-    //   );
-    //   console.log(response);
-    //   // setrenderer((prev) => !prev);
-    //   // window.location.reload();
-    // } catch (error) {
-    //   return error;
-    // }
-    // setImageUrl("");
-    // }
-    setrenderer((prev) => !prev);
-  };
-  const log2content = async () => {
-    // if (editorRef.current) {
-    //   const content = editorRef.current.getContent();
-    setloadingState(true);
-    const result = await databases.updateDocument(
-      import.meta.env.VITE_DATABASE_ID, // databaseId
-      import.meta.env.VITE_COLLECTION_ID, // collectionId
-      updateDoc.$id, // documentId
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME}/image/upload`,
       {
-        title: title,
-        body: content,
-      }
+        method: "POST",
+        body: formData,
+      },
     );
-    // console.log(result);
-    setTitle("");
-    setContent("Type Your Text Here");
-    setFlag(false);
-    setImage(null);
-    setloadingState(false);
-    setrenderer((prev) => !prev);
-    // }
+
+    const data = await response.json();
+    console.log("cloudinary resp", data);
+    return data.secure_url;
+  }
+
+  const logContent3 = async () => {
+    let responseURL = null;
+    if (image) {
+      console.log("going for cloudinary api");
+      responseURL = await uploadImageToCloudinary(image);
+      console.log("response url,", responseURL);
+      setImageUrl(responseURL);
+    }
+    try {
+      const response = await fetch(
+        import.meta.env.VITE_BLOG_URL_WITH_TOKEN + "/create",
+        {
+          method: "POST",
+          headers: {
+            Authorization: user.token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: title,
+            content: content,
+            image: responseURL,
+          }),
+        },
+      );
+      const respData = await response.json();
+      console.log("response", respData);
+      if (respData.success === true) {
+        getRefreshedBlogs();
+      } else {
+        window.alert("Failed to create ", respData.message);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setImage(null);
+      setContent("Enter your text here");
+      setTitle("");
+    }
+  };
+
+  const logContent2 = async () => {
+    let finalUrl = null;
+    if (image) {
+      console.log("going for cloudinary api");
+      finalUrl = await uploadImageToCloudinary(image);
+      console.log("response url,", finalUrl);
+      // setImageUrl(finalUrl);
+    }
+    try {
+      console.log("new img URL", finalUrl);
+      const response = await fetch(
+        import.meta.env.VITE_BLOG_URL_WITH_TOKEN + "/update",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: user.token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            blogPid: updateDoc.blogPid,
+            title: title,
+            content: content,
+            image: finalUrl,
+          }),
+        },
+      );
+      const respData = await response.json();
+      console.log("response", respData);
+      if (respData.success === true) {
+        getRefreshedBlogs();
+      } else {
+        window.alert("Failed to create ", respData.message);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setImage(null);
+      setImageUrl(null);
+      setContent("Enter your text here");
+      setTitle("");
+      setFlag(false);
+    }
   };
 
   // image upload
   const [image, setImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState(null);
 
   useEffect(() => {
     if (image) {
@@ -251,20 +226,6 @@ function Profile() {
   //   };
   // }, []);
 
-  const handleImageChange = (e) => {
-    e.preventDefault();
-    setImage(e.target.files[0]);
-    // console.log("Image received :", image);
-  };
-
-  const handleDestroyEditor = () => {
-    if (editorRef.current) {
-      editorRef.current.remove();
-      editorRef.current = null;
-      // editorRef.current.remove; // Call destroy method on the editor instance
-    }
-  };
-
   const [loadingState, setloadingState] = useState(false);
   const [updateDoc, setUpdateDoc] = useState();
   const [flag, setFlag] = useState(false);
@@ -274,7 +235,7 @@ function Profile() {
   const [renderer, setrenderer] = useState(false);
   const [name, setName] = useState("");
   const [details, setdetails] = useState();
-  const { userId } = useParams();
+  // const { userId } = useParams();
   const [showModal, setShowModal] = useState(false);
   const [selectedCards, setSelectedCards] = useState([]);
 
@@ -282,7 +243,7 @@ function Profile() {
     setSelectedCards((prevSelected) =>
       prevSelected.includes(id)
         ? prevSelected.filter((cardId) => cardId !== id)
-        : [...prevSelected, id]
+        : [...prevSelected, id],
     );
     // console.log(selectedCards.length);
   };
@@ -293,76 +254,41 @@ function Profile() {
       window.confirm("Are you sure you want to delete the selected posts ?")
     ) {
       try {
-        for (const cardId of selectedCards) {
-          await databases.deleteDocument(
-            import.meta.env.VITE_DATABASE_ID,
-            import.meta.env.VITE_COLLECTION_ID,
-            cardId
-          );
-          // console.log(`Deleted card with ID: ${cardId}`);
+        const response = await fetch(
+          import.meta.env.VITE_BLOG_URL_WITH_TOKEN + "/delete",
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: user.token,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              blogPids: selectedCards,
+            }),
+          },
+        );
+        const respData = await response.json();
+        console.log("response", respData);
+        if (respData.success === true) {
+          window.alert("Selected blogs deleted successfully");
+          getRefreshedBlogs();
+        } else {
+          window.alert("Failed to delete ", respData.message);
         }
-        setSelectedCards([]);
-        setrenderer((prev) => !prev);
       } catch (error) {
-        // console.error("Error deleting cards:", error);
+        console.error("Error deleting cards:", error);
+      } finally {
+        setSelectedCards([]);
       }
     }
     setloadingState(false);
   };
 
-  const fetchUserDocuments = async (userId) => {
-    try {
-      setloadingState(true);
-      const response = await databases.listDocuments(
-        import.meta.env.VITE_DATABASE_ID,
-        import.meta.env.VITE_COLLECTION_ID,
-        [Query.equal("author", userId)]
-      );
-      // console.log(userId);
-      dispatch(listDocs(response.documents));
-      // console.log("were in User documents:", response.documents);
-      const result = await databases.getDocument(
-        import.meta.env.VITE_DATABASE_ID, // databaseId
-        import.meta.env.VITE_USERS_COLLECTIONS, // collectionId
-        userId // queries (optional)
-      );
-      // console.log(result);
-      // console.log("sessionId", user);
-      setdetails(result);
-      setName(result.name);
-
-      setloadingState(false);
-    } catch (error) {
-      // console.error("Error fetching documents:", error.message);
-    }
-  };
-  // fetchUserDocuments(userId);
   // useEffect(() => {
-  //   return () => {
-  //     // Cleanup TinyMCE editor instance on unmount
-  //     if (editorRef.current) {
-  //       editorRef.current.destroy();
-  //       editorRef.current = null;
-  //     }
-  //   };
-  // }, []);
-  const handleDelete = async (modalId) => {
-    if (window.confirm("are You sure you want to delete the document ?")) {
-      const result = await databases.deleteDocument(
-        import.meta.env.VITE_DATABASE_ID, // databaseId
-        import.meta.env.VITE_COLLECTION_ID, // collectionId
-        modalId // documentId
-      );
-      // console.log(result);
-      setrenderer((prev) => !prev);
-    }
-  };
+  //   // console.log("bucket id", import.meta.env.VITE_STORAGE_ID);
 
-  useEffect(() => {
-    // console.log("bucket id", import.meta.env.VITE_STORAGE_ID);
-
-    fetchUserDocuments(userId);
-  }, [renderer, userId]);
+  //   fetchUserDocuments(userId);
+  // }, [renderer, userId]);
 
   {
     showModal && (
@@ -370,6 +296,26 @@ function Profile() {
         className="fixed left-0 right-0 top-0 bottom-0 bg-black backdrop-blur-sm opacity-25 "
         style={{ zIndex: "13" }}
       ></div>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md w-full text-center border border-gray-200">
+          <div className="flex justify-center mb-4">
+            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
+              <span className="text-2xl">🔒</span>
+            </div>
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+            No Active Session
+          </h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            No active user session was found. Redirecting you to the login
+            page...
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -389,7 +335,7 @@ function Profile() {
 
         <div className="profile-header">
           <div className="profile-info">
-            <h2 className="font-nunito text-4xl font-bold">{name}</h2>
+            <h2 className="font-nunito text-4xl font-bold">{user.name}</h2>
           </div>
           <div>
             <button
@@ -434,17 +380,17 @@ function Profile() {
           {docs &&
             docs.map((doc) => {
               return (
-                <div key={doc.$id} className="card group ">
+                <div key={doc.blogPid} className="card group ">
                   <input
                     id="default-checkbox"
                     type="checkbox"
-                    checked={selectedCards.includes(doc.$id)}
-                    onChange={() => handleSelectCard(doc.$id)}
+                    checked={selectedCards.includes(doc.blogPid)}
+                    onChange={() => handleSelectCard(doc.blogPid)}
                     className="rounded-full cursor-pointer outline-none absolute top-2 right-2 w-8 h-8 text-blue-400 bg-gray-100 border-gray-300 focus:ring-0 checked:border-blue-400"
                   />
-                  {doc.imageURL ? (
+                  {doc.image ? (
                     <img
-                      src={doc.imageURL}
+                      src={doc.image}
                       alt="Blog Photo"
                       style={{
                         width: "100%",
@@ -459,8 +405,8 @@ function Profile() {
                     <div className="card-buttons">
                       <button
                         onClick={() => {
-                          // console.log(doc.body);
-                          handleReadMore(doc);
+                          // console.log(doc.content);
+                          handleReadMore(doc.blogPid);
                         }}
                         className="read-more-btn inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                       >
@@ -471,9 +417,9 @@ function Profile() {
                           e.preventDefault();
                           setFlag(true);
                           await setUpdateDoc(doc);
-                          // console.log("our updatedoc", updateDoc);
+                          console.log("image prop.", image);
                           setTitle(doc.title);
-                          setContent(doc.body);
+                          setContent(doc.content);
                           handleScrollToTitle();
                           // editorRef.current.scrollIntoView({
                           //   behavior: "smooth",
@@ -541,11 +487,20 @@ function Profile() {
           </div>
           {flag ? (
             <div className="w-full flex items-center gap-6 justify-center">
+              <label>📷 Choose an image : </label>
+              <input
+                // value={image}
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0])}
+                className="block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                id="file_input"
+                type="file"
+              />
               <button
                 className="bg-transparent hover:bg-green-500 text-green-700 font-semibold hover:text-white py-2 px-4 border border-green-500 hover:border-transparent rounded"
                 onClick={async (e) => {
                   e.preventDefault();
-                  await log2content();
+                  await logContent2();
                 }}
               >
                 Update
@@ -578,7 +533,7 @@ function Profile() {
                   e.preventDefault();
                   setloadingState(true);
                   // await handleImageUpload(e);
-                  await logContent();
+                  await logContent3();
                   setloadingState(false);
                   // editorRef.current.destroy();
                 }}

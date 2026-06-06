@@ -2,29 +2,37 @@ import { Client, Databases, ID } from "appwrite";
 import React, { useEffect, useState } from "react";
 import client from "../appwrite";
 import { useNavigate } from "react-router-dom";
+import { listGlobalDocs } from "../store/authSlice";
 import he from "he";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 function Home() {
-  const [docs, setDocs] = useState(() => {
-    const savedDocs = sessionStorage.getItem("docs");
-    return savedDocs ? JSON.parse(savedDocs) : null;
-  });
+  const [docs, setDocs] = useState([]);
   const navigate = useNavigate();
-  const prev = useSelector((state) => state.auth.userId);
-  const databases = new Databases(client);
+  const dispatch = useDispatch();
+  const prev = useSelector((state) => state.auth.user);
+
+  const docsFromStore = useSelector((state) => state.auth.globalDocs);
+
+  async function fetchDocs() {
+    const response = await fetch(
+      import.meta.env.VITE_BLOG_URL_WITHOUT_TOKEN + "/all",
+    );
+    const respData = await response.json();
+    const docs = respData.data;
+    dispatch(listGlobalDocs(docs));
+    return docs;
+  }
 
   async function getDocs() {
-    const result = await databases.listDocuments(
-      import.meta.env.VITE_DATABASE_ID, // databaseId
-      import.meta.env.VITE_COLLECTION_ID // collectionId
-    );
-    // console.log("databse id : ", import.meta.env.VITE_DATABASE_ID);
-    // console.log("collections id :", import.meta.env.VITE_COLLCTION_ID);
+    if (docsFromStore && docsFromStore.length > 0) {
+      console.log("from store setting global docs");
+      setDocs(docsFromStore);
+    }
 
-    setDocs(result.documents);
-    sessionStorage.setItem("docs", JSON.stringify(result.documents));
-    // console.log(result);
+    const docs = await fetchDocs();
+    console.log("setting globalDocs from api");
+    setDocs(docs);
   }
 
   useEffect(() => {
@@ -36,7 +44,7 @@ function Home() {
   }, [prev]);
 
   const handleReadMore = (doc) => {
-    navigate("/details", { state: doc });
+    navigate(`/details/${doc.blogPid}`);
   };
 
   return (
@@ -53,15 +61,31 @@ function Home() {
           </div>
 
           <div className="absolute right-4">
-            <button
-              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/login");
-              }}
-            >
-              Get Started
-            </button>
+            {prev ? (
+              <div className="flex justify-center items-center h-12 mb-4 hover:scale-110 transition-transform cursor-pointer">
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(`/profile/${prev.pid}`);
+                  }}
+                  className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100"
+                >
+                  <span className="text-2xl">👤</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-center items-center h-14 mb-4">
+                <button
+                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/login");
+                  }}
+                >
+                  Get Started
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>
@@ -69,12 +93,12 @@ function Home() {
         {docs &&
           docs.map((doc) => (
             <div
-              key={doc.$id}
+              key={doc.blogPid}
               className="bg-white shadow-lg rounded-lg p-4 flex flex-col justify-between transition-transform transform hover:scale-105"
             >
-              {doc.imageURL ? (
+              {doc.image ? (
                 <img
-                  src={doc.imageURL}
+                  src={doc.image}
                   alt={doc.title}
                   className="rounded-t-md w-full h-48 object-cover mb-4"
                 />
@@ -84,9 +108,10 @@ function Home() {
                 {doc.title}
               </h3>
 
-              {!doc.imageURL && doc.body && (
+              {!doc.image && doc.content && (
                 <p className="text-sm text-gray-600 mb-4">
-                  {he.decode(doc.body.replace(/<[^>]+>/g, "").slice(0, 60))}...
+                  {he.decode(doc.content.replace(/<[^>]+>/g, "").slice(0, 60))}
+                  ...
                 </p>
               )}
 

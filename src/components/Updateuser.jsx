@@ -138,7 +138,7 @@ function Updateuser() {
             onClick={async (e) => {
               e.preventDefault();
               const result = await databases.updateDocument(
-                import.meta.env.VITE_DATABASE_ID, // databaseId
+                "66758ff80025a0f37a63", // databaseId
                 "6686e3dc002407d4cf23", // collectionId
                 item.userId, // documentId
                 {

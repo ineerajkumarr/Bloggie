@@ -1,22 +1,24 @@
-// localStorage.js
-export const saveState = (state) => {
+export const saveBlogToCache = (blog) => {
   try {
-    const serializedState = JSON.stringify(state);
-    localStorage.setItem("state", serializedState);
+    const existing = JSON.parse(localStorage.getItem("blogCache")) || {};
+
+    existing[blog.blogPid] = blog;
+
+    localStorage.setItem("blogCache", JSON.stringify(existing));
+    console.log("saved!");
   } catch (e) {
-    // console.error("Could not save state", e);
+    console.error("Could not save blog", e);
   }
 };
 
-export const loadState = () => {
+export const loadBlogFromCache = (blogPid) => {
   try {
-    const serializedState = localStorage.getItem("state");
-    if (serializedState === null) {
-      return undefined;
-    }
-    return JSON.parse(serializedState);
+    console.log("call for cache....");
+    const cache = JSON.parse(localStorage.getItem("blogCache")) || {};
+    console.log("saved in localStorage", cache[blogPid]);
+    return cache[blogPid] || null;
   } catch (e) {
-    // console.error("Could not load state", e);
-    return undefined;
+    console.error("Could not load blog", e);
+    return null;
   }
 };

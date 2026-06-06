@@ -3,7 +3,7 @@ import client from "../appwrite";
 import { databases } from "../appwrite";
 import { Account, Query } from "appwrite";
 import { useNavigate } from "react-router-dom";
-import { login } from "../store/authSlice";
+import { listDocs, login } from "../store/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import Spinner from "./Spinner";
 import { FaSpinner } from "react-icons/fa"; // Import spinner icon
@@ -19,53 +19,105 @@ function Login() {
   const account = new Account(client);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const prev = useSelector((state) => state.auth.userId);
+  const prev = useSelector((state) => state.auth.user);
 
   // Redirect if a user is already logged in
   useEffect(() => {
     if (prev) {
       // console.log("Can't access login page while logged in.");
-      navigate(`/profile/${prev}`);
+      navigate(`/profile/${prev.pid}`);
     } else {
       // console.log("No active session found.");
     }
   }, [prev, navigate]);
 
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError("");
+
+  //   try {
+  //     // Step 1: Fetch user data from Appwrite Users Collection
+  //     console.log("firstly here");
+  //     const response = await databases.listDocuments(
+  //       import.meta.env.VITE_DATABASE_ID, // Replace with your Appwrite database ID
+  //       import.meta.env.VITE_USERS_COLLECTIONS, // Replace with your Users Collection ID
+  //       [Query.equal("email", userId)], // Find user by email
+  //     );
+  //     console.log("RESPONSE", response);
+
+  //     if (response.documents.length === 0) {
+  //       setError("User not found. Please check your email.");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     const user = response.documents[0];
+
+  //     // Step 2: Check if password matches
+  //     if (user.password !== passwd) {
+  //       setError("Incorrect password.");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     // Step 3: Store user session in Redux & redirect
+  //     dispatch(login(user));
+  //     navigate(`/profile/${user.userId}`);
+  //   } catch (error) {
+  //     // console.error("Login failed:", error);
+  //     setError("An error occurred. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleLogin = async (e) => {
+    setError("");
+    console.log("here");
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
-      // Step 1: Fetch user data from Appwrite Users Collection
-      const response = await databases.listDocuments(
-        import.meta.env.VITE_DATABASE_ID, // Replace with your Appwrite database ID
-        import.meta.env.VITE_USERS_COLLECTIONS, // Replace with your Users Collection ID
-        [Query.equal("email", userId)] // Find user by email
+      const response = await fetch(import.meta.env.VITE_USERS_URL + "/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userId,
+          password: passwd,
+        }),
+      });
+      const data = await response.json();
+      const userData = data.data;
+      console.log(userData);
+      if (userData === null) {
+        setError(data.message);
+        return;
+      }
+      const newToken = "Bearer " + userData.token;
+      console.log("New tOken", newToken);
+      userData.token = newToken;
+      console.log("new data ", userData);
+      dispatch(login(userData));
+      //Going for getting focs of recently logged in user
+      const docsResponse = await fetch(
+        import.meta.env.VITE_BLOG_URL_WITH_TOKEN,
+        {
+          method: "GET",
+          headers: {
+            Authorization: newToken,
+          },
+        },
       );
-      // console.log("RESPONSE", response);
-
-      if (response.documents.length === 0) {
-        setError("User not found. Please check your email.");
-        setLoading(false);
-        return;
-      }
-
-      const user = response.documents[0];
-
-      // Step 2: Check if password matches
-      if (user.password !== passwd) {
-        setError("Incorrect password.");
-        setLoading(false);
-        return;
-      }
-
-      // Step 3: Store user session in Redux & redirect
-      dispatch(login(user));
-      navigate(`/profile/${user.userId}`);
+      const docsData = await docsResponse.json();
+      const docs = docsData.data;
+      console.log(docs);
+      dispatch(listDocs(docs));
+      navigate(`/profile/${userData.pid}`);
     } catch (error) {
-      // console.error("Login failed:", error);
-      setError("An error occurred. Please try again.");
+      console.log(error);
+      setError("An error occured. Try again.");
     } finally {
       setLoading(false);
     }

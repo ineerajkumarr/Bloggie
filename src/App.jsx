@@ -25,7 +25,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/update" element={<Updateuser />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/details" element={<Page />} />
+          <Route path="/details/:blogPid" element={<Page />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/profile/:userId" element={<Profile />} />
         </Routes>

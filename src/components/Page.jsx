@@ -1,30 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { databases } from "../appwrite";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { loadBlogFromCache, saveBlogToCache } from "../store/localstorage";
 
 function Page() {
   const location = useLocation();
   const [author, setAuthor] = useState(null);
-  const item = location.state || {};
+  const [blogData, setBlogData] = useState(null);
+  const { blogPid } = useParams();
   const navigate = useNavigate();
-  useEffect(() => {
-    // console.log("-------------*---------", prev);
-    async function fetchAuthor() {
-      try {
-        const result = await databases.getDocument(
-          import.meta.env.VITE_DATABASE_ID, // databaseId
-          import.meta.env.VITE_USERS_COLLECTIONS, // collectionId
-          item.author
-        );
-        setAuthor(result.name);
-      } catch (error) {
-        // console.error("Error fetching author:", error);
-      }
+  async function loadFreshBlogData(blogPid) {
+    const response = await fetch(
+      import.meta.env.VITE_BLOG_URL_WITHOUT_TOKEN + `/${blogPid}`,
+    );
+    const respData = await response.json();
+    const blog = respData.data;
+    console.log("from api ", blog);
+    console.log("saved in state ", blogData);
+    saveBlogToCache(blog);
+    setBlogData(blog);
+  }
+  async function loadBlogData() {
+    console.log("loading");
+    let blog = loadBlogFromCache(blogPid);
+    if (!blog) {
+      loadFreshBlogData(blogPid);
+    } else {
+      console.log("stale data");
+      setBlogData(blog);
+      loadFreshBlogData(blogPid);
     }
-    fetchAuthor();
-  }, [item.author]);
+  }
+  useEffect(() => {
+    console.log("came into page ", blogPid);
+    loadBlogData();
+  }, [blogPid]);
 
+  if (!blogData) {
+    return <div className="text-center mt-10 text-xl">Loading blog...</div>;
+  }
   return (
     <>
       <div className="text-center p-4 ">
@@ -43,19 +58,19 @@ function Page() {
 
           {/* Blog Title */}
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mt-4">
-            {item.title}
+            {blogData.title}
           </h1>
 
           {/* Author & Date */}
           <div className="text-gray-600 text-lg mt-2">
-            {author ? `~ ${author}` : "Loading author..."} • {item.date}
+            {blogData.name} • {blogData.createdAt.split("T")[0]}
           </div>
 
           {/* Blog Cover Image */}
-          {item.imageURL && (
+          {blogData.image && (
             <div className="my-6">
               <img
-                src={item.imageURL}
+                src={blogData.image}
                 alt="Cover"
                 className="w-full rounded-lg object-cover shadow-md"
                 loading="lazy"
@@ -66,7 +81,7 @@ function Page() {
           {/* Blog Content */}
           <div
             className="prose prose-lg max-w-none text-gray-700"
-            dangerouslySetInnerHTML={{ __html: item.body }}
+            dangerouslySetInnerHTML={{ __html: blogData.content }}
           ></div>
         </div>
       </div>
